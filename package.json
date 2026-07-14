@@ -1,0 +1,11 @@
+{
+  "name": "bd-ft-calc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dead-simple board foot cost calculator for lumber, with history.",
+  "type": "module",
+  "scripts": {
+    "start": "bun run server.ts",
+    "icon": "bun run tools/gen-icon.ts"
+  }
+}

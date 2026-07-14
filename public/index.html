@@ -1,0 +1,665 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Board Foot Cost Calculator</title>
+<meta name="description" content="Dead-simple board foot cost calculator for lumber, with history." />
+<meta name="theme-color" content="#7a4a24" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=1" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%B5%3C/text%3E%3C/svg%3E" />
+
+<style>
+  :root {
+    --bg: #f4efe9;
+    --card: #ffffff;
+    --ink: #2b2119;
+    --muted: #8a7d70;
+    --line: #e4dbd0;
+    --accent: #7a4a24;
+    --accent-soft: #f0e4d7;
+    --good: #2f7d4f;
+    --danger: #b23b3b;
+    --shadow: 0 1px 2px rgba(60, 40, 20, 0.06), 0 8px 24px rgba(60, 40, 20, 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1712;
+      --card: #262019;
+      --ink: #f0e8df;
+      --muted: #a89a8b;
+      --line: #3a3128;
+      --accent: #e0a86a;
+      --accent-soft: #35291d;
+      --good: #6bcf95;
+      --danger: #e07a7a;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    padding: 24px 16px 64px;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  main {
+    width: 100%;
+    max-width: 460px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  header .mark {
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  h1 small {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .field.wide {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 11px 12px;
+    font-size: 16px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .len-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+
+  .len-row select {
+    width: auto;
+  }
+
+  .result {
+    margin-top: 16px;
+    padding: 16px 18px;
+    background: var(--accent-soft);
+    border-radius: 12px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .result .cost {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+
+  .result .bf {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .result .bf b {
+    color: var(--ink);
+    font-size: 15px;
+  }
+
+  .actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+  }
+
+  button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    padding: 11px 14px;
+  }
+
+  button.primary {
+    flex: 1;
+    background: var(--accent);
+    color: #fff;
+  }
+
+  button.primary:active {
+    transform: translateY(1px);
+  }
+
+  button.ghost {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--line);
+  }
+
+  section.history {
+    margin-top: 26px;
+  }
+
+  .history-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0 4px;
+  }
+
+  .history-head h2 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .clear-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 4px 6px;
+  }
+
+  .clear-btn:hover {
+    color: var(--danger);
+  }
+
+  ul.entries {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  li.entry {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  li.entry .desc {
+    min-width: 0;
+  }
+
+  li.entry .dims {
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  li.entry .meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  li.entry .right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  li.entry .amount {
+    text-align: right;
+  }
+
+  li.entry .amount .money {
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  li.entry .amount .bfs {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .del {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 6px;
+  }
+
+  .del:hover {
+    color: var(--danger);
+    background: var(--accent-soft);
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 20px 0;
+  }
+
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>
+
+<main>
+  <header>
+    <span class="mark">🪵</span>
+    <h1>
+      Board Foot Calculator
+      <small>lumber cost, dead simple</small>
+    </h1>
+  </header>
+
+  <div class="card">
+    <div class="grid">
+      <div class="field">
+        <label for="thickness">Thickness (in)</label>
+        <input id="thickness" type="number" inputmode="decimal" step="0.25" min="0" placeholder="e.g. 1" />
+      </div>
+
+      <div class="field">
+        <label for="width">Width (in)</label>
+        <input id="width" type="number" inputmode="decimal" step="0.25" min="0" placeholder="e.g. 6" />
+      </div>
+
+      <div class="field wide">
+        <label for="length">Length</label>
+        <div class="len-row">
+          <input id="length" type="number" inputmode="decimal" step="0.5" min="0" placeholder="e.g. 8" />
+          <select id="lengthUnit" aria-label="Length unit">
+            <option value="ft">feet</option>
+            <option value="in">inches</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="quantity">Quantity</label>
+        <input id="quantity" type="number" inputmode="numeric" step="1" min="1" value="1" />
+      </div>
+
+      <div class="field">
+        <label for="price">Price / board ft ($)</label>
+        <input id="price" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 4.50" />
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="cost" id="totalCost">$0.00</div>
+      <div class="bf">
+        <b id="totalBf">0.00</b> board ft<br />
+        <span id="perBoard">0.00 bd ft each</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="saveBtn" type="button">Save to history</button>
+      <button class="ghost" id="resetBtn" type="button">Reset</button>
+    </div>
+  </div>
+
+  <section class="history">
+    <div class="history-head">
+      <h2>History</h2>
+      <button class="clear-btn" id="clearBtn" type="button">Clear all</button>
+    </div>
+    <ul class="entries" id="entries"></ul>
+    <p class="empty" id="emptyMsg">No saved calculations yet.</p>
+  </section>
+
+  <footer>Board feet = thickness&nbsp;×&nbsp;width&nbsp;×&nbsp;length&nbsp;÷&nbsp;144&nbsp;(inches)</footer>
+</main>
+
+<script>
+  "use strict";
+
+  const STORAGE_KEY = "bd-ft-calc.history";
+  const MAX_ENTRIES = 100;
+
+  const els = {
+    thickness: document.getElementById("thickness"),
+    width: document.getElementById("width"),
+    length: document.getElementById("length"),
+    lengthUnit: document.getElementById("lengthUnit"),
+    quantity: document.getElementById("quantity"),
+    price: document.getElementById("price"),
+    totalCost: document.getElementById("totalCost"),
+    totalBf: document.getElementById("totalBf"),
+    perBoard: document.getElementById("perBoard"),
+    saveBtn: document.getElementById("saveBtn"),
+    resetBtn: document.getElementById("resetBtn"),
+    clearBtn: document.getElementById("clearBtn"),
+    entries: document.getElementById("entries"),
+    emptyMsg: document.getElementById("emptyMsg"),
+  };
+
+  const money = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+  });
+
+  function num(el) {
+    const v = parseFloat(el.value);
+    if (!isFinite(v) || v < 0) {
+      return 0;
+    }
+    return v;
+  }
+
+  // Board feet for one board = thickness(in) × width(in) × length(in) / 144.
+  function boardFeetEach(thick, width, length, unit) {
+    const lengthIn = unit === "ft" ? length * 12 : length;
+    return (thick * width * lengthIn) / 144;
+  }
+
+  function currentInputs() {
+    const qtyRaw = Math.floor(num(els.quantity));
+    const qty = qtyRaw > 0 ? qtyRaw : 1;
+    return {
+      thick: num(els.thickness),
+      width: num(els.width),
+      length: num(els.length),
+      unit: els.lengthUnit.value,
+      qty: qty,
+      price: num(els.price),
+    };
+  }
+
+  function compute(inp) {
+    const each = boardFeetEach(inp.thick, inp.width, inp.length, inp.unit);
+    const totalBf = each * inp.qty;
+    const cost = totalBf * inp.price;
+    return {
+      each: each,
+      totalBf: totalBf,
+      cost: cost,
+    };
+  }
+
+  function recalc() {
+    const inp = currentInputs();
+    const out = compute(inp);
+    els.totalCost.textContent = money.format(out.cost);
+    els.totalBf.textContent = out.totalBf.toFixed(2);
+    els.perBoard.textContent = out.each.toFixed(2) + " bd ft each";
+  }
+
+  // ---- History ----
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        return [];
+      }
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed;
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function saveHistory(list) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    } catch (err) {
+      /* storage full or unavailable — non-fatal */
+    }
+  }
+
+  let history = loadHistory();
+
+  function describe(e) {
+    const unitLabel = e.unit === "ft" ? "ft" : "in";
+    const dims = trimNum(e.thick) + " × " + trimNum(e.width) + " × " + trimNum(e.length) + " " + unitLabel;
+    if (e.qty > 1) {
+      return dims + "  ×" + e.qty;
+    }
+    return dims;
+  }
+
+  function trimNum(n) {
+    return parseFloat(n.toFixed(3)).toString();
+  }
+
+  function formatWhen(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    }) + ", " + d.toLocaleTimeString(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
+  function renderHistory() {
+    els.entries.innerHTML = "";
+    if (history.length === 0) {
+      els.emptyMsg.style.display = "block";
+      return;
+    }
+    els.emptyMsg.style.display = "none";
+    for (const e of history) {
+      const li = document.createElement("li");
+      li.className = "entry";
+
+      const desc = document.createElement("div");
+      desc.className = "desc";
+
+      const dims = document.createElement("div");
+      dims.className = "dims";
+      dims.textContent = describe(e);
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = money.format(e.price) + "/bd ft  •  " + formatWhen(e.ts);
+
+      desc.appendChild(dims);
+      desc.appendChild(meta);
+
+      const right = document.createElement("div");
+      right.className = "right";
+
+      const amount = document.createElement("div");
+      amount.className = "amount";
+
+      const moneyEl = document.createElement("div");
+      moneyEl.className = "money";
+      moneyEl.textContent = money.format(e.cost);
+
+      const bfs = document.createElement("div");
+      bfs.className = "bfs";
+      bfs.textContent = e.totalBf.toFixed(2) + " bd ft";
+
+      amount.appendChild(moneyEl);
+      amount.appendChild(bfs);
+
+      const del = document.createElement("button");
+      del.className = "del";
+      del.type = "button";
+      del.setAttribute("aria-label", "Delete entry");
+      del.textContent = "✕";
+      del.addEventListener("click", function () {
+        removeEntry(e.id);
+      });
+
+      right.appendChild(amount);
+      right.appendChild(del);
+
+      li.appendChild(desc);
+      li.appendChild(right);
+      els.entries.appendChild(li);
+    }
+  }
+
+  function saveCurrent() {
+    const inp = currentInputs();
+    if (inp.thick <= 0 || inp.width <= 0 || inp.length <= 0) {
+      return;
+    }
+    const out = compute(inp);
+    const entry = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      ts: Date.now(),
+      thick: inp.thick,
+      width: inp.width,
+      length: inp.length,
+      unit: inp.unit,
+      qty: inp.qty,
+      price: inp.price,
+      totalBf: out.totalBf,
+      cost: out.cost,
+    };
+    history.unshift(entry);
+    if (history.length > MAX_ENTRIES) {
+      history = history.slice(0, MAX_ENTRIES);
+    }
+    saveHistory(history);
+    renderHistory();
+  }
+
+  function removeEntry(id) {
+    history = history.filter(function (e) {
+      return e.id !== id;
+    });
+    saveHistory(history);
+    renderHistory();
+  }
+
+  function clearAll() {
+    if (history.length === 0) {
+      return;
+    }
+    const ok = window.confirm("Clear all saved calculations?");
+    if (!ok) {
+      return;
+    }
+    history = [];
+    saveHistory(history);
+    renderHistory();
+  }
+
+  function resetForm() {
+    els.thickness.value = "";
+    els.width.value = "";
+    els.length.value = "";
+    els.quantity.value = "1";
+    els.price.value = "";
+    els.lengthUnit.value = "ft";
+    recalc();
+    els.thickness.focus();
+  }
+
+  // ---- Wiring ----
+  const inputEls = [
+    els.thickness,
+    els.width,
+    els.length,
+    els.lengthUnit,
+    els.quantity,
+    els.price,
+  ];
+
+  for (const el of inputEls) {
+    el.addEventListener("input", recalc);
+  }
+
+  els.saveBtn.addEventListener("click", saveCurrent);
+  els.resetBtn.addEventListener("click", resetForm);
+  els.clearBtn.addEventListener("click", clearAll);
+
+  recalc();
+  renderHistory();
+</script>
