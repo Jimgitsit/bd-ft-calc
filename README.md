@@ -41,3 +41,12 @@ bun run icon
 
 Runs on this box behind nginx at `jimmcgowen.com/bd-ft-calc/` (Bun on port
 `58002`; a trailing-slash `proxy_pass` strips the path prefix).
+
+Kept always-up by launchd (`KeepAlive` → auto-restart on crash). A user
+LaunchAgent is installed (`com.jim.bd-ft-calc`); a root-LaunchDaemon variant for
+boot-without-login is also provided. See [`deploy/README.md`](deploy/README.md).
+Restart after a code change:
+
+```sh
+launchctl kickstart -k gui/$(id -u)/com.jim.bd-ft-calc
+```

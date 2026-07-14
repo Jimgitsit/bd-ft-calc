@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jim.bd-ft-calc</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/doug/.bun/bin/bun</string>
+        <string>run</string>
+        <string>server.ts</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/doug/dev-local/bd-ft-calc</string>
+
+    <key>UserName</key>
+    <string>doug</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PORT</key>
+        <string>58002</string>
+        <key>PATH</key>
+        <string>/Users/doug/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/doug/dev-local/bd-ft-calc/bd-ft-calc.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/doug/dev-local/bd-ft-calc/bd-ft-calc.err.log</string>
+</dict>
+</plist>
